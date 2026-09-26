@@ -16,7 +16,7 @@ func TestResponsesNonStreaming(t *testing.T) {
 	srv := newTestServer(t, prov)
 
 	// Responses-style input: array of message items with input_text parts.
-	body := `{"model":"fired_reviewer","instructions":"codex system prompt",
+	body := `{"model":"tempered_reviewer","instructions":"codex system prompt",
 		"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"review this repo"}]}]}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(body)))
@@ -56,7 +56,7 @@ func TestResponsesStringInput(t *testing.T) {
 	prov := &recordingProvider{reply: "ok"}
 	srv := newTestServer(t, prov)
 
-	body := `{"model":"fired_reviewer","input":"just a string"}`
+	body := `{"model":"tempered_reviewer","input":"just a string"}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(body)))
 
@@ -72,7 +72,7 @@ func TestResponsesStringInput(t *testing.T) {
 func TestResponsesStreaming(t *testing.T) {
 	srv := newTestServer(t, &recordingProvider{reply: "streamed answer"})
 
-	body := `{"model":"fired_reviewer","input":"go","stream":true}`
+	body := `{"model":"tempered_reviewer","input":"go","stream":true}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(body)))
 
@@ -108,7 +108,7 @@ func TestResponsesZstdEncodedBody(t *testing.T) {
 	prov := &recordingProvider{reply: "decompressed ok"}
 	srv := newTestServer(t, prov)
 
-	payload := `{"model":"fired_reviewer","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hello zstd"}]}]}`
+	payload := `{"model":"tempered_reviewer","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hello zstd"}]}]}`
 	enc, err := zstd.NewWriter(nil)
 	if err != nil {
 		t.Fatalf("zstd writer: %v", err)
@@ -136,7 +136,7 @@ func TestResponsesZstdSniffedNoHeader(t *testing.T) {
 	prov := &recordingProvider{reply: "ok"}
 	srv := newTestServer(t, prov)
 
-	payload := `{"model":"fired_reviewer","input":"sniffed"}`
+	payload := `{"model":"tempered_reviewer","input":"sniffed"}`
 	enc, _ := zstd.NewWriter(nil)
 	compressed := enc.EncodeAll([]byte(payload), nil)
 	enc.Close()
@@ -160,7 +160,7 @@ func TestResponsesZstdSniffedNoHeader(t *testing.T) {
 // rather than 404.
 func TestResponsesDefaultAgentFallback(t *testing.T) {
 	prov := &recordingProvider{reply: "ok"}
-	srv := newTestServerWithDefault(t, prov, "fired_reviewer")
+	srv := newTestServerWithDefault(t, prov, "tempered_reviewer")
 
 	body := `{"model":"gpt-5.5","input":"hi from the GUI"}`
 	rec := httptest.NewRecorder()

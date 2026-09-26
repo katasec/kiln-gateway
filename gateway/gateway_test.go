@@ -41,7 +41,7 @@ func newTestServer(t *testing.T, prov kiln.Provider) *Gateway {
 	if err != nil {
 		t.Fatalf("NewAgent: %v", err)
 	}
-	return New(Config{Agents: map[string]*kiln.Agent{"fired_reviewer": agent}})
+	return New(Config{Agents: map[string]*kiln.Agent{"tempered_reviewer": agent}})
 }
 
 // newTestServerWithDefault is like newTestServer but configures a default agent
@@ -56,7 +56,7 @@ func newTestServerWithDefault(t *testing.T, prov kiln.Provider, def string) *Gat
 	if err != nil {
 		t.Fatalf("NewAgent: %v", err)
 	}
-	return New(Config{Agents: map[string]*kiln.Agent{"fired_reviewer": agent}, DefaultAgent: def})
+	return New(Config{Agents: map[string]*kiln.Agent{"tempered_reviewer": agent}, DefaultAgent: def})
 }
 
 func TestModelsListsAgents(t *testing.T) {
@@ -72,7 +72,7 @@ func TestModelsListsAgents(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if list.Object != "list" || len(list.Data) != 1 || list.Data[0].ID != "fired_reviewer" {
+	if list.Object != "list" || len(list.Data) != 1 || list.Data[0].ID != "tempered_reviewer" {
 		t.Fatalf("unexpected model list: %+v", list)
 	}
 }
@@ -81,7 +81,7 @@ func TestChatCompletionsRunsAgent(t *testing.T) {
 	prov := &recordingProvider{reply: "a grounded review"}
 	srv := newTestServer(t, prov)
 
-	body := `{"model":"fired_reviewer","messages":[{"role":"user","content":"review this repo"}]}`
+	body := `{"model":"tempered_reviewer","messages":[{"role":"user","content":"review this repo"}]}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(body)))
 
@@ -136,7 +136,7 @@ func TestChatCompletionsContentArrayForm(t *testing.T) {
 	srv := newTestServer(t, prov)
 
 	// Some clients send content as an array of typed parts.
-	body := `{"model":"fired_reviewer","messages":[{"role":"user","content":[{"type":"text","text":"part one "},{"type":"text","text":"part two"}]}]}`
+	body := `{"model":"tempered_reviewer","messages":[{"role":"user","content":[{"type":"text","text":"part one "},{"type":"text","text":"part two"}]}]}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(body)))
 
@@ -152,7 +152,7 @@ func TestChatCompletionsContentArrayForm(t *testing.T) {
 func TestChatCompletionsStreaming(t *testing.T) {
 	srv := newTestServer(t, &recordingProvider{reply: "streamed answer"})
 
-	body := `{"model":"fired_reviewer","messages":[{"role":"user","content":"go"}],"stream":true}`
+	body := `{"model":"tempered_reviewer","messages":[{"role":"user","content":"go"}],"stream":true}`
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(body)))
 

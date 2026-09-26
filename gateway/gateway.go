@@ -59,7 +59,7 @@ type Gateway struct {
 }
 
 // New wires a Gateway from cfg. The map key in cfg.Agents is the model name a
-// client requests (e.g. "fired_reviewer").
+// client requests (e.g. "tempered_reviewer").
 func New(cfg Config) *Gateway {
 	logger := cfg.Logger
 	if logger == nil {
