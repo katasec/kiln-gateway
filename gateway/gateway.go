@@ -1,7 +1,7 @@
-// Package gateway exposes forge Agents behind an OpenAI-compatible HTTP API.
+// Package gateway exposes kiln Agents behind an OpenAI-compatible HTTP API.
 //
 // The Gateway implements the minimal surface needed to point an existing OpenAI
-// client (set OPENAI_BASE_URL) at a forged agent: GET /v1/models lists the
+// client (set OPENAI_BASE_URL) at a kiln agent: GET /v1/models lists the
 // available agents as models, and POST /v1/chat/completions runs the named
 // agent's full loop (the Engine owns the loop) and returns an OpenAI chat
 // completion.
@@ -11,7 +11,7 @@
 // serves should be created with kiln.Config{DisableMemory: true}.
 //
 // Agents are dependencies of the Gateway, not servers themselves; the Gateway
-// owns the HTTP lifecycle and routes requests to the selected forge-core Agent.
+// owns the HTTP lifecycle and routes requests to the selected kiln Agent.
 package gateway
 
 import (
@@ -48,7 +48,7 @@ type Config struct {
 	Logger *log.Logger
 }
 
-// Gateway routes OpenAI-compatible requests to forge Agents keyed by model name
+// Gateway routes OpenAI-compatible requests to kiln Agents keyed by model name
 // and owns the HTTP server lifecycle.
 type Gateway struct {
 	agents       map[string]*kiln.Agent
@@ -303,7 +303,7 @@ func (g *Gateway) handleModels(w http.ResponseWriter, _ *http.Request) {
 			ID:      name,
 			Object:  "model",
 			Created: now,
-			OwnedBy: "forge",
+			OwnedBy: "kiln",
 		})
 	}
 	g.writeJSON(w, http.StatusOK, list)
@@ -369,21 +369,21 @@ func (g *Gateway) handleChatCompletions(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// translateMessages maps OpenAI messages to forge messages 1:1. The agent's own
+// translateMessages maps OpenAI messages to kiln messages 1:1. The agent's own
 // scaffold remains the authoritative system prompt; any client-supplied system
-// message flows through as a forge system message.
+// message flows through as a kiln system message.
 func translateMessages(msgs []reqMessage) []kiln.Message {
 	out := make([]kiln.Message, 0, len(msgs))
 	for _, m := range msgs {
 		out = append(out, kiln.Message{
-			Role:    toForgeRole(m.Role),
+			Role:    toKilnRole(m.Role),
 			Content: []kiln.ContentBlock{message.Text(m.Content.text)},
 		})
 	}
 	return out
 }
 
-func toForgeRole(r string) kiln.Role {
+func toKilnRole(r string) kiln.Role {
 	switch r {
 	case "system":
 		return kiln.RoleSystem

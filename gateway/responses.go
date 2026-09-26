@@ -12,7 +12,7 @@ import (
 )
 
 // This file implements the subset of the OpenAI Responses API that lets a host
-// CLI which speaks Responses (e.g. Codex) point at a forged agent. Like the
+// CLI which speaks Responses (e.g. Codex) point at a kiln agent. Like the
 // Chat Completions path, the Engine owns the loop: we map model -> agent, run
 // the agent, and return the final assistant text. Inbound tools and the host's
 // own instructions are not yet relayed (that is the passthrough / graduation
@@ -59,7 +59,7 @@ func (ri *responsesInput) UnmarshalJSON(b []byte) error {
 			continue
 		}
 		ri.messages = append(ri.messages, kiln.Message{
-			Role:    toForgeRole(it.Role),
+			Role:    toKilnRole(it.Role),
 			Content: []kiln.ContentBlock{message.Text(it.Content.text)},
 		})
 	}

@@ -10,7 +10,7 @@
 ## Context
 
 kiln-gateway implements the **server** side of the OpenAI API (Chat Completions
-and Responses) so host CLIs like Codex can point at a forged agent. This is the
+and Responses) so host CLIs like Codex can point at a kiln agent. This is the
 *northbound* direction.
 
 This is the inverse of kiln, which uses native provider SDKs (OpenAI,

@@ -1,4 +1,4 @@
-// Command kiln-gateway serves forged agents behind a local OpenAI-compatible
+// Command kiln-gateway serves kiln agents behind a local OpenAI-compatible
 // endpoint. It is the runnable proof of the serve path: it wires demo agents
 // (defined in Go) to the OpenAI gateway so you can point any OpenAI client at
 // it.
