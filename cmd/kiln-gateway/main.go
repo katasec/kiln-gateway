@@ -33,7 +33,7 @@ import (
 	"github.com/katasec/kiln/provider/openai"
 )
 
-const forgedReviewerScaffold = `You are a repository reviewer operating under a mission scaffold.
+const firedReviewerScaffold = `You are a repository reviewer operating under a mission scaffold.
 
 Operating rules:
 - Start from a small orientation layer; do not assume the whole repo.
@@ -51,7 +51,7 @@ func main() {
 	addr := flag.String("addr", ":8787", "address to listen on")
 	model := flag.String("model", string(openai.ModelGPT54Nano), "upstream model id")
 	baseURL := flag.String("base-url", "", "override upstream OpenAI base URL (e.g. for xAI)")
-	defaultAgent := flag.String("default-agent", "forged_reviewer",
+	defaultAgent := flag.String("default-agent", "fired_reviewer",
 		"agent to use when a client requests an unknown model id (host GUIs send their own model names); empty for strict 404")
 	flag.Parse()
 
@@ -68,7 +68,7 @@ func main() {
 
 	agents := map[string]*kiln.Agent{
 		"vanilla_reviewer": mustAgent(provider, vanillaScaffold),
-		"forged_reviewer":  mustAgent(provider, forgedReviewerScaffold),
+		"fired_reviewer":   mustAgent(provider, firedReviewerScaffold),
 	}
 
 	gw := gateway.New(gateway.Config{
