@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/katasec/forge-core"
-	"github.com/katasec/forge-core/message"
+	"github.com/katasec/kiln"
+	"github.com/katasec/kiln/message"
 )
 
 // This file implements the subset of the OpenAI Responses API that lets a host
@@ -30,13 +30,13 @@ type responsesRequest struct {
 // responsesInput decodes the Responses "input" field, which may be a bare
 // string or an array of items (messages, plus tool/reasoning items we skip).
 type responsesInput struct {
-	messages []forge.Message
+	messages []kiln.Message
 }
 
 func (ri *responsesInput) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err == nil {
-		ri.messages = []forge.Message{message.UserText(s)}
+		ri.messages = []kiln.Message{message.UserText(s)}
 		return nil
 	}
 	var items []struct {
@@ -58,9 +58,9 @@ func (ri *responsesInput) UnmarshalJSON(b []byte) error {
 		if it.Content.text == "" {
 			continue
 		}
-		ri.messages = append(ri.messages, forge.Message{
+		ri.messages = append(ri.messages, kiln.Message{
 			Role:    toForgeRole(it.Role),
-			Content: []forge.ContentBlock{message.Text(it.Content.text)},
+			Content: []kiln.ContentBlock{message.Text(it.Content.text)},
 		})
 	}
 	return nil
@@ -130,7 +130,7 @@ func (g *Gateway) handleResponses(w http.ResponseWriter, r *http.Request) {
 		g.logger.Printf("responses: model %q -> agent %q (default)", req.Model, resolved)
 	}
 
-	resp, err := agent.Run(r.Context(), forge.AgentRequest{Messages: req.Input.messages})
+	resp, err := agent.Run(r.Context(), kiln.AgentRequest{Messages: req.Input.messages})
 	if err != nil {
 		g.writeError(w, http.StatusBadGateway, "upstream_error", err.Error())
 		return

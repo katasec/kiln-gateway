@@ -8,7 +8,7 @@
 //
 // The agent name is the OpenAI "model" field. The Gateway is stateless: an
 // OpenAI client sends the full message history on every call, so the agents it
-// serves should be created with forge.Config{DisableMemory: true}.
+// serves should be created with kiln.Config{DisableMemory: true}.
 //
 // Agents are dependencies of the Gateway, not servers themselves; the Gateway
 // owns the HTTP lifecycle and routes requests to the selected forge-core Agent.
@@ -29,8 +29,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/katasec/forge-core"
-	"github.com/katasec/forge-core/message"
+	"github.com/katasec/kiln"
+	"github.com/katasec/kiln/message"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -40,7 +40,7 @@ type Config struct {
 	// Addr is the listen address for the HTTP server (e.g. ":8787").
 	Addr string
 	// Agents maps the model name a client requests to the agent that serves it.
-	Agents map[string]*forge.Agent
+	Agents map[string]*kiln.Agent
 	// DefaultAgent names the agent used when a client requests an unknown model
 	// id. Empty means strict mode (unknown model -> 404).
 	DefaultAgent string
@@ -51,7 +51,7 @@ type Config struct {
 // Gateway routes OpenAI-compatible requests to forge Agents keyed by model name
 // and owns the HTTP server lifecycle.
 type Gateway struct {
-	agents       map[string]*forge.Agent
+	agents       map[string]*kiln.Agent
 	defaultAgent string
 	logger       *log.Logger
 	mux          *http.ServeMux
@@ -106,7 +106,7 @@ func (g *Gateway) Stop(ctx context.Context) error {
 // resolve maps a requested model name to an agent, falling back to the
 // configured default agent for unrecognized model ids. It returns the agent and
 // the resolved agent name, or ok=false when no agent applies.
-func (g *Gateway) resolve(model string) (*forge.Agent, string, bool) {
+func (g *Gateway) resolve(model string) (*kiln.Agent, string, bool) {
 	if a, ok := g.agents[model]; ok {
 		return a, model, true
 	}
@@ -333,7 +333,7 @@ func (g *Gateway) handleChatCompletions(w http.ResponseWriter, r *http.Request) 
 		g.logger.Printf("chat: model %q -> agent %q (default)", req.Model, resolved)
 	}
 
-	resp, err := agent.Run(r.Context(), forge.AgentRequest{
+	resp, err := agent.Run(r.Context(), kiln.AgentRequest{
 		Messages: translateMessages(req.Messages),
 	})
 	if err != nil {
@@ -372,33 +372,33 @@ func (g *Gateway) handleChatCompletions(w http.ResponseWriter, r *http.Request) 
 // translateMessages maps OpenAI messages to forge messages 1:1. The agent's own
 // scaffold remains the authoritative system prompt; any client-supplied system
 // message flows through as a forge system message.
-func translateMessages(msgs []reqMessage) []forge.Message {
-	out := make([]forge.Message, 0, len(msgs))
+func translateMessages(msgs []reqMessage) []kiln.Message {
+	out := make([]kiln.Message, 0, len(msgs))
 	for _, m := range msgs {
-		out = append(out, forge.Message{
+		out = append(out, kiln.Message{
 			Role:    toForgeRole(m.Role),
-			Content: []forge.ContentBlock{message.Text(m.Content.text)},
+			Content: []kiln.ContentBlock{message.Text(m.Content.text)},
 		})
 	}
 	return out
 }
 
-func toForgeRole(r string) forge.Role {
+func toForgeRole(r string) kiln.Role {
 	switch r {
 	case "system":
-		return forge.RoleSystem
+		return kiln.RoleSystem
 	case "assistant":
-		return forge.RoleAssistant
+		return kiln.RoleAssistant
 	case "tool":
-		return forge.RoleTool
+		return kiln.RoleTool
 	default:
-		return forge.RoleUser
+		return kiln.RoleUser
 	}
 }
 
-func toOAIFinish(r forge.FinishReason) string {
+func toOAIFinish(r kiln.FinishReason) string {
 	switch r {
-	case forge.FinishReasonIterLimit:
+	case kiln.FinishReasonIterLimit:
 		return "length"
 	default:
 		// stop, error, and tool_use (already resolved by the loop) all present
@@ -407,7 +407,7 @@ func toOAIFinish(r forge.FinishReason) string {
 	}
 }
 
-func totalTokens(u forge.TokenUsage) int {
+func totalTokens(u kiln.TokenUsage) int {
 	if u.TotalTokens > 0 {
 		return u.TotalTokens
 	}

@@ -1,19 +1,19 @@
 # OpenAI wire compatibility — architecture note
 
-> Informal note capturing the reasoning behind how forge-gateway handles
+> Informal note capturing the reasoning behind how kiln-gateway handles
 > OpenAI-compatible request/response shapes, so it isn't lost in future
-> discussions. Not a formal ADR — we'll decide later whether Forge adopts an ADR
+> discussions. Not a formal ADR — we'll decide later whether Kiln adopts an ADR
 > process, numbering, Mission Control integration, etc.
 >
 > Captured: 2026-06-01.
 
 ## Context
 
-forge-gateway implements the **server** side of the OpenAI API (Chat Completions
+kiln-gateway implements the **server** side of the OpenAI API (Chat Completions
 and Responses) so host CLIs like Codex can point at a forged agent. This is the
 *northbound* direction.
 
-This is the inverse of forge-core, which uses native provider SDKs (OpenAI,
+This is the inverse of kiln, which uses native provider SDKs (OpenAI,
 Anthropic, …) as a **client** — the *southbound* direction — precisely so it does
 not own third-party payload shapes. That principle does not transfer directly to
 the gateway, because the OpenAI Go SDK is a client library and there is no
@@ -45,7 +45,7 @@ expose.
    endpoints/features we actually serve.
 4. Isolate **all** OpenAI-compatible wire concerns behind an internal boundary
    package: **`internal/oaiwire`**.
-5. The rest of forge-gateway deals in **Forge-native request/result types**, not
+5. The rest of kiln-gateway deals in **Kiln-native request/result types**, not
    OpenAI payload structs. `oaiwire` is the only place that knows "chat" vs
    "responses" or imports any OpenAI SDK.
 6. Use the official OpenAI spec as a future **validation/reference** mechanism
@@ -101,7 +101,7 @@ Root cause: `openai-go`'s response types are built to be **decoded** (no
 not yield clean server emission.
 
 **Decision:** SDK response types were evaluated and rejected for gateway emission
-because they marshal noisy/off-spec server responses; Forge Gateway will keep its
+because they marshal noisy/off-spec server responses; Kiln Gateway will keep its
 small hand-rolled compatibility slice for now. Concretely:
 
 - Keep the small hand-rolled wire slice.

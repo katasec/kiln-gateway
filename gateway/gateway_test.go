@@ -8,32 +8,32 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katasec/forge-core"
-	"github.com/katasec/forge-core/message"
+	"github.com/katasec/kiln"
+	"github.com/katasec/kiln/message"
 )
 
-// recordingProvider is a stub forge.Provider that returns a canned assistant
+// recordingProvider is a stub kiln.Provider that returns a canned assistant
 // reply and records the request it was given, so tests can prove the HTTP layer
 // translated and forwarded correctly.
 type recordingProvider struct {
 	reply    string
-	lastReq  forge.ProviderRequest
+	lastReq  kiln.ProviderRequest
 	gotCalls int
 }
 
-func (p *recordingProvider) Generate(_ context.Context, req forge.ProviderRequest) (*forge.ProviderResponse, error) {
+func (p *recordingProvider) Generate(_ context.Context, req kiln.ProviderRequest) (*kiln.ProviderResponse, error) {
 	p.lastReq = req
 	p.gotCalls++
-	return &forge.ProviderResponse{
-		Messages:     []forge.Message{message.AssistantText(p.reply)},
-		FinishReason: forge.FinishReasonStop,
-		Usage:        forge.TokenUsage{InputTokens: 11, OutputTokens: 7},
+	return &kiln.ProviderResponse{
+		Messages:     []kiln.Message{message.AssistantText(p.reply)},
+		FinishReason: kiln.FinishReasonStop,
+		Usage:        kiln.TokenUsage{InputTokens: 11, OutputTokens: 7},
 	}, nil
 }
 
-func newTestServer(t *testing.T, prov forge.Provider) *Gateway {
+func newTestServer(t *testing.T, prov kiln.Provider) *Gateway {
 	t.Helper()
-	agent, err := forge.NewAgent(forge.Config{
+	agent, err := kiln.NewAgent(kiln.Config{
 		Provider:      prov,
 		SystemPrompt:  "SCAFFOLD",
 		DisableMemory: true,
@@ -41,14 +41,14 @@ func newTestServer(t *testing.T, prov forge.Provider) *Gateway {
 	if err != nil {
 		t.Fatalf("NewAgent: %v", err)
 	}
-	return New(Config{Agents: map[string]*forge.Agent{"forged_reviewer": agent}})
+	return New(Config{Agents: map[string]*kiln.Agent{"forged_reviewer": agent}})
 }
 
 // newTestServerWithDefault is like newTestServer but configures a default agent
 // so unknown model ids fall back instead of 404ing.
-func newTestServerWithDefault(t *testing.T, prov forge.Provider, def string) *Gateway {
+func newTestServerWithDefault(t *testing.T, prov kiln.Provider, def string) *Gateway {
 	t.Helper()
-	agent, err := forge.NewAgent(forge.Config{
+	agent, err := kiln.NewAgent(kiln.Config{
 		Provider:      prov,
 		SystemPrompt:  "SCAFFOLD",
 		DisableMemory: true,
@@ -56,7 +56,7 @@ func newTestServerWithDefault(t *testing.T, prov forge.Provider, def string) *Ga
 	if err != nil {
 		t.Fatalf("NewAgent: %v", err)
 	}
-	return New(Config{Agents: map[string]*forge.Agent{"forged_reviewer": agent}, DefaultAgent: def})
+	return New(Config{Agents: map[string]*kiln.Agent{"forged_reviewer": agent}, DefaultAgent: def})
 }
 
 func TestModelsListsAgents(t *testing.T) {

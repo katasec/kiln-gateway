@@ -1,4 +1,4 @@
-// Command forge-gateway serves forged agents behind a local OpenAI-compatible
+// Command kiln-gateway serves forged agents behind a local OpenAI-compatible
 // endpoint. It is the runnable proof of the serve path: it wires demo agents
 // (defined in Go) to the OpenAI gateway so you can point any OpenAI client at
 // it.
@@ -6,10 +6,10 @@
 // Usage:
 //
 //	export OPENAI_API_KEY=sk-...            # key for the upstream provider
-//	go run ./cmd/forge-gateway --addr :8787
+//	go run ./cmd/kiln-gateway --addr :8787
 //
 //	export OPENAI_BASE_URL=http://localhost:8787/v1
-//	export OPENAI_API_KEY=forge-local       # the gateway ignores this
+//	export OPENAI_API_KEY=kiln-local       # the gateway ignores this
 //	# now start Codex CLI / Grok Build, or just curl /v1/chat/completions
 //
 // The two demo agents share one provider and model and differ only in their
@@ -28,9 +28,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/katasec/forge-core"
-	"github.com/katasec/forge-core/provider/openai"
-	"github.com/katasec/forge-gateway/gateway"
+	"github.com/katasec/kiln"
+	"github.com/katasec/kiln-gateway/gateway"
+	"github.com/katasec/kiln/provider/openai"
 )
 
 const forgedReviewerScaffold = `You are a repository reviewer operating under a mission scaffold.
@@ -66,7 +66,7 @@ func main() {
 	}
 	provider := openai.New(apiKey, openai.Model(*model), opts...)
 
-	agents := map[string]*forge.Agent{
+	agents := map[string]*kiln.Agent{
 		"vanilla_reviewer": mustAgent(provider, vanillaScaffold),
 		"forged_reviewer":  mustAgent(provider, forgedReviewerScaffold),
 	}
@@ -77,7 +77,7 @@ func main() {
 		DefaultAgent: *defaultAgent,
 	})
 
-	log.Printf("forge-gateway serving %d agents on %s (upstream model %s, default agent %q)", len(agents), *addr, *model, *defaultAgent)
+	log.Printf("kiln-gateway serving %d agents on %s (upstream model %s, default agent %q)", len(agents), *addr, *model, *defaultAgent)
 	log.Printf("point your client at: export OPENAI_BASE_URL=http://localhost%s/v1", *addr)
 
 	// main owns OS signal handling; the gateway owns Start/Stop.
@@ -90,22 +90,22 @@ func main() {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			log.Fatalf("forge-gateway: %v", err)
+			log.Fatalf("kiln-gateway: %v", err)
 		}
 	case <-ctx.Done():
 		stop() // restore default signal handling so a second signal force-quits
-		log.Printf("forge-gateway shutting down…")
+		log.Printf("kiln-gateway shutting down…")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 		if err := gw.Stop(shutdownCtx); err != nil {
-			log.Fatalf("forge-gateway shutdown: %v", err)
+			log.Fatalf("kiln-gateway shutdown: %v", err)
 		}
-		log.Printf("forge-gateway stopped")
+		log.Printf("kiln-gateway stopped")
 	}
 }
 
-func mustAgent(provider forge.Provider, scaffold string) *forge.Agent {
-	agent, err := forge.NewAgent(forge.Config{
+func mustAgent(provider kiln.Provider, scaffold string) *kiln.Agent {
+	agent, err := kiln.NewAgent(kiln.Config{
 		Provider:      provider,
 		SystemPrompt:  scaffold,
 		DisableMemory: true, // OpenAI clients are stateless; they resend history
